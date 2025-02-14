@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "817651697511",
+    "project_id": "proyecto-final-composse",
+    "storage_bucket": "proyecto-final-composse.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:817651697511:android:d1a45510d788ba39e291c2",
+        "android_client_info": {
+          "package_name": "com.example.proyectofinalcomposable"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3wULkw9sORAhMyo6VduKlif2UOa7OKuU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
