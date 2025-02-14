@@ -1,5 +1,3 @@
-# Proyecto Final Compossable
-
 Este proyecto es una aplicación Android desarrollada utilizando Jetpack Compose y Firebase para manejar el registro e inicio de sesión de usuarios. También hace uso de la API de PokeAPI para mostrar un Pokémon aleatorio y proporciona funcionalidades para el manejo de accesos de usuarios.
 
 ## Descripción

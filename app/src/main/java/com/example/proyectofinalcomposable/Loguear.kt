@@ -1,56 +1,92 @@
 package com.example.proyectofinalcomposable
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import android.widget.Toast
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.firebase.firestore.FirebaseFirestore
+import java.util.*
 
 @Composable
 fun Loguear(navController: NavController) {
-    val userInput = remember { androidx.compose.runtime.mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val db = FirebaseFirestore.getInstance()
 
-    // Usamos Column con Modifier.fillMaxSize() para llenar toda la pantalla.
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp), // Espaciado de 16dp en todos los lados
+            .padding(16.dp),
         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center // Centrado vertical
+        verticalArrangement = Arrangement.Center
     ) {
-        // Título
         Text(text = "Pantalla de Logueo")
 
-        // Campo de texto para "si" o "no".
         OutlinedTextField(
-            value = userInput.value,
-            onValueChange = { userInput.value = it },
-            label = { Text("Escribe 'si' o 'no'") },
-            modifier = Modifier.fillMaxWidth() // Hace que el campo ocupe todo el ancho
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Introduce tu correo") },
+            modifier = Modifier.fillMaxWidth()
         )
 
-        // Espacio entre el texto y el boton.
-        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón para confirmar y navegar.
         Button(onClick = {
-            // la navegacion depende de el texto que introduscamos.
-            if (userInput.value.lowercase() == "si") {
-                navController.navigate("registrar")
-            } else if (userInput.value.lowercase() == "no") {
-                navController.navigate("principal")
+            if (email.isNotEmpty()) {
+                val emailLower = email.trim().lowercase() // Convercion a minúsculas y eliminamos espacios
+
+                db.collection("Usuarios")
+                    .whereEqualTo("correo", emailLower)
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        if (!documents.isEmpty) {
+                            val userDoc = documents.documents[0]
+                            val userId = userDoc.id
+
+                            // Actualizar el nº de accesos
+                            val numAccesses = userDoc.getLong("numero_accesos") ?: 0
+                            val newAccessCount = numAccesses + 1
+                            val currentTimestamp = Date()
+
+                            db.collection("Usuarios").document(userId)
+                                .update(
+                                    "ultimo_acceso", currentTimestamp,
+                                    "numero_accesos", newAccessCount
+                                )
+                                .addOnSuccessListener {
+                                    Toast.makeText(context, "Usuario encontrado y actualizado", Toast.LENGTH_SHORT).show()
+                                    navController.navigate("principal")
+                                }
+                                .addOnFailureListener {
+                                    Toast.makeText(context, "Error al actualizar datos", Toast.LENGTH_SHORT).show()
+                                }
+                        } else {
+                            Toast.makeText(context, "Usuario no encontrado, regístrate", Toast.LENGTH_SHORT).show()
+                            navController.navigate("registrar")
+                        }
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(context, "Error al verificar el usuario", Toast.LENGTH_SHORT).show()
+                    }
+            } else {
+                Toast.makeText(context, "Por favor ingresa un correo", Toast.LENGTH_SHORT).show()
             }
         }) {
             Text(text = "Confirmar")
         }
+
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Boton para navegar a registrar
+        Button(onClick = {
+            navController.navigate("Registrar")
+        }) {
+            Text(text = "Registrarse")
+        }
     }
 }
-

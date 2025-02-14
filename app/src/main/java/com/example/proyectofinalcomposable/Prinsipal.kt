@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import com.example.proyectofinalcomposable.retrofit.PokeApiService
 import com.example.proyectofinalcomposable.retrofit.PokemonResponse
 import com.example.proyectofinalcomposable.retrofit.RetrofitClient
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -25,18 +26,19 @@ import java.util.*
 @Composable
 fun Principal(navController: NavController) {
     val context = LocalContext.current
+    val db = FirebaseFirestore.getInstance()
     var pokemon by remember { mutableStateOf<PokemonResponse?>(null) }
     val pokeApiService = RetrofitClient.instance.create(PokeApiService::class.java)
     val coroutineScope = rememberCoroutineScope()
     var hasGeneratedPokemon by remember { mutableStateOf(false) }
-    var stopReminders by remember { mutableStateOf(false) } // Nueva variable para detener los mensajes
+    var stopReminders by remember { mutableStateOf(false) }
 
-    // Muestra un Toast al entrar en esta pantalla
+    // Mostrar mensaje de bienvenida
     LaunchedEffect(Unit) {
         Toast.makeText(context, "Bienvenido a la Pokedex", Toast.LENGTH_SHORT).show()
     }
 
-    // Hilo para mostrar un mensaje cada 5 segundos
+    // Hilo para mensajes concurrentes
     val handler = remember { Handler(Looper.getMainLooper()) }
     val reminderRunnable = remember {
         object : Runnable {
@@ -54,15 +56,10 @@ fun Principal(navController: NavController) {
         handler.postDelayed(reminderRunnable, 5000)
     }
 
-    // fecha demo
-    val currentDate = remember {
-        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
-    }
-
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        // uso de la api
+        // Contenido principal
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
@@ -84,37 +81,19 @@ fun Principal(navController: NavController) {
 
             Button(onClick = {
                 coroutineScope.launch {
-                    val randomId = (1..1025).random() // parámetro de elección de los pokemones por su id
+                    val randomId = (1..1025).random()
                     pokemon = pokeApiService.getPokemon(randomId)
-                    hasGeneratedPokemon = true // Detener los mensajes
+                    hasGeneratedPokemon = true
                 }
             }) {
                 Text(text = "Cargar Pokémon Aleatorio")
             }
         }
 
-        // numero demo
-        Text(
-            text = "Número",
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp),
-            fontSize = 20.sp
-        )
-
-        // fecha demo
-        Text(
-            text = "Fecha: $currentDate",
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp),
-            fontSize = 18.sp
-        )
-
-        // para cerrar secion
+        // Botón para cerrar sesión
         Button(
             onClick = {
-                stopReminders = true // Detiene los mensajes
+                stopReminders = true
                 handler.removeCallbacks(reminderRunnable)
                 navController.navigate("loguear")
             },
@@ -123,6 +102,21 @@ fun Principal(navController: NavController) {
                 .padding(16.dp)
         ) {
             Text(text = "Cerrar Sesión")
+        }
+
+        // Boton para cerrar la App
+        Button(
+            onClick = {
+                stopReminders = true
+                handler.removeCallbacks(reminderRunnable)
+                // Cerrar la aplicación
+                android.os.Process.killProcess(android.os.Process.myPid())
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            Text(text = "Cerrar Aplicación")
         }
     }
 }
